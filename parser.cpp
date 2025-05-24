@@ -128,6 +128,25 @@ int run_parser(const string& input_file, const string& output_file) {
             funcVarUsed[varName] = false;
         }
     }
+    // Track usage of function-initialized pointers
+for (int i = 0; i < lines.size(); ++i) {
+    for (auto& entry : funcInitLine) {
+        string varName = entry.first;
+        regex usageRegex("\\b" + varName + "\\b");
+        if (regex_search(lines[i], usageRegex) && lines[i].find(varName + " =") == string::npos) {
+            funcVarUsed[varName] = true;
+        }
+    }
+}
+
+// Warn if function-initialized pointer is never used
+for (const auto& entry : funcInitLine) {
+    string varName = entry.first;
+    int lineNum = entry.second;
+    if (!funcVarUsed[varName]) {
+        cout << "Warning: Function-initialized pointer '" << varName << "' at line " << lineNum << " is never used.\n";
+    }
+}
 
     cout << "Output written to " << output_file << "\n";
     return 0;
