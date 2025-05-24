@@ -26,10 +26,10 @@ string trim(const string& str) {
     return str.substr(start, end - start + 1);
 }
 
-int main() {
-    ifstream file("testData/test_2.c");
+int run_parser(const string& input_file, const string& output_file) {
+    ifstream file(input_file);
     if (!file.is_open()) {
-        cerr << "Failed to open test_2.c\n";
+        cerr << "Failed to open " << input_file << "\n";
         return 1;
     }
 
@@ -39,20 +39,15 @@ int main() {
         lines.push_back(removeComments(line));
     }
 
-     // Match pointer assignment using malloc/calloc/realloc, including cases inside loops
     regex dmaRegex(R"((int|float|double|char)\s*\b([a-zA-Z_]\w*)\b\s*=\s*\([^)]+\)\s*(malloc|calloc|realloc)\s*\()");
-
     unordered_map<string, int> lastOccurrence;
     vector<string> dmaVars;
 
     for (int i = 0; i < lines.size(); ++i) {
         smatch match;
         string currentLine = trim(lines[i]);
-
-         // Check if the line is inside a loop
         if (currentLine.find("for") != string::npos || currentLine.find("while") != string::npos) {
-            // Handle loop-specific logic
-             if (regex_search(currentLine, match, dmaRegex)) {
+            if (regex_search(currentLine, match, dmaRegex)) {
                 string varName = match[2];
                 dmaVars.push_back(varName);
                 lastOccurrence[varName] = i + 1;
@@ -64,18 +59,13 @@ int main() {
         }
     }
 
-    // Also capture variables that are declared earlier but assigned later ,includeing loops
     regex pointerAssignRegex(R"(\b([a-zA-Z_]\w*)\s*=\s*\([^)]+\)\s*(malloc|calloc|realloc)\s*\()");
-
     for (int i = 0; i < lines.size(); ++i) {
         smatch match;
         string currentLine = trim(lines[i]);
-        
-        // Check if the line is inside a loop
         if (currentLine.find("for") != string::npos || currentLine.find("while") != string::npos) {
-            // Handle loop-specific logic
-        if (regex_search(currentLine, match, pointerAssignRegex)) {
-             string varName = match[1];
+            if (regex_search(currentLine, match, pointerAssignRegex)) {
+                string varName = match[1];
                 if (lastOccurrence.find(varName) == lastOccurrence.end()) {
                     dmaVars.push_back(varName);
                 }
@@ -90,7 +80,6 @@ int main() {
         }
     }
 
-    // Track last usage
     for (const string& var : dmaVars) {
         regex usageRegex("\\b" + var + "\\b");
         for (int i = 0; i < lines.size(); ++i) {
@@ -100,40 +89,32 @@ int main() {
         }
     }
 
-    // Sort and output
     vector<pair<string, int>> sorted(lastOccurrence.begin(), lastOccurrence.end());
     sort(sorted.begin(), sorted.end());
 
-    ofstream outFile("output.txt");
-    //outFile << "DMA Variable\t\tLast Occurrence\n";
+    ofstream outFile(output_file);
     for (const auto& entry : sorted) {
         outFile << entry.first << " : " << entry.second << "\n";
     }
-     // Track reassigned variables without free
-    unordered_map<string, bool> isFreed; // Tracks if a variable has been freed
 
+    unordered_map<string, bool> isFreed;
     for (int i = 0; i < lines.size(); ++i) {
         smatch match;
         string currentLine = trim(lines[i]);
-
-        // Check for malloc/calloc/realloc assignments
         if (regex_search(currentLine, match, pointerAssignRegex)) {
             string varName = match[1];
             if (isFreed.find(varName) != isFreed.end() && !isFreed[varName]) {
-                // Variable was reassigned without being freed
                 cout << "Warning: Variable '" << varName << "' reassigned without being freed at line " << i + 1 << "\n";
             }
-            isFreed[varName] = false; // Mark as not freed
+            isFreed[varName] = false;
         }
-
-        // Check for free calls
         regex freeRegex(R"(free\s*\(\s*([a-zA-Z_]\w*)\s*\))");
         if (regex_search(currentLine, match, freeRegex)) {
             string varName = match[1];
-            isFreed[varName] = true; // Mark as freed
+            isFreed[varName] = true;
         }
     }
 
-    cout << "Output written to output.txt\n";
+    cout << "Output written to " << output_file << "\n";
     return 0;
 }
