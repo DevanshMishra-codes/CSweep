@@ -114,6 +114,12 @@ int run_parser(const string& input_file, const string& output_file) {
             isFreed[varName] = true;
         }
     }
+    // Regex to detect pointer assignment from a function call
+    regex funcPtrAssignRegex(R"((int|float|double|char)\s*\*+\s*([a-zA-Z_]\w*)\s*=\s*([a-zA-Z_]\w*)\s*\([^;]*\))");
+    unordered_map<string, int> funcInitLine;
+    unordered_map<string, bool> funcVarUsed;
+
+    
 
     cout << "Output written to " << output_file << "\n";
     return 0;
