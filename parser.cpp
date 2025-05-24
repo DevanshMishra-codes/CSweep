@@ -114,12 +114,20 @@ int run_parser(const string& input_file, const string& output_file) {
             isFreed[varName] = true;
         }
     }
-    // Regex to detect pointer assignment from a function call
+    //  detect pointer assignment from a function call
     regex funcPtrAssignRegex(R"((int|float|double|char)\s*\*+\s*([a-zA-Z_]\w*)\s*=\s*([a-zA-Z_]\w*)\s*\([^;]*\))");
     unordered_map<string, int> funcInitLine;
     unordered_map<string, bool> funcVarUsed;
-
-    
+       // Detect function-initialized pointers
+    for (int i = 0; i < lines.size(); ++i) {
+        smatch match;
+        string currentLine = trim(lines[i]);
+        if (regex_search(currentLine, match, funcPtrAssignRegex)) {
+            string varName = match[2];
+            funcInitLine[varName] = i + 1;
+            funcVarUsed[varName] = false;
+        }
+    }
 
     cout << "Output written to " << output_file << "\n";
     return 0;
