@@ -1,9 +1,0 @@
-age : 14
-gpa : 16
-balance : 20
-grade : 23
-population : 25
-temperature : 29
-currency : 20
-updatedGPA : 17
-futurePopulation : 26
