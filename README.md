@@ -35,7 +35,7 @@ In short:
 ## 🗂️ Project Structure
 
 ```bash
-sujal-maheshwari2004-csweep/
+DevanshMishra-codes-CSweep/
 │
 ├── README.md             # Project overview and instructions
 ├── augument.py           # Python script (helper for data handling or preprocessing)
